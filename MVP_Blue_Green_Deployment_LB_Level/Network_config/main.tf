@@ -10,6 +10,8 @@ terraform {
 
 resource "aws_vpc" "clouda-commerce"{
     cidr_block = "10.0.0.0/16"
+    enable_dns_hostnames = true
+    enable_dns_support = true
     tags ={
         Name = "clouda-commerce"
     }
@@ -23,7 +25,8 @@ resource "aws_subnet" "clcom-private-1" {
   tags = {
     "Name"                                      = "clouda-commerce-private-1"
     "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Green" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Blue" = "owned"
   }
 }
 
@@ -35,7 +38,8 @@ resource "aws_subnet" "clcom-private-2" {
   tags = {
     "Name"                                      = "clouda-commerce-private-2"
     "kubernetes.io/role/internal-elb"           = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Green" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Blue" = "owned"
   }
 }
 
@@ -48,7 +52,8 @@ resource "aws_subnet" "clcom-public-1" {
   tags = {
     "Name"                                      = "clouda-commerce-public-1"
     "kubernetes.io/role/elb"                    = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Green" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Blue" = "owned"
   }
 }
 
@@ -61,7 +66,8 @@ resource "aws_subnet" "clcom-public-2" {
   tags = {
     "Name"                                      = "clouda-commerce-public-2"
     "kubernetes.io/role/elb"                    = "1"
-    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Green" = "owned"
+    "kubernetes.io/cluster/${var.cluster_name}-Blue" = "owned"
   }
 }
 
@@ -105,20 +111,29 @@ resource "aws_nat_gateway" "clouda-commerce-nat-2" {
 }
 
 
-resource "aws_route_table" "clcom-private-rtb" {
+resource "aws_route_table" "clcom-private-rtb-a" {
   vpc_id = aws_vpc.clouda-commerce.id
 
-  route {
-    cidr_block     = "10.0.0.0/20"
+  route{
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.clouda-commerce-nat-1.id
   }
+
+  tags = {
+    Name = "clouda-commerce-private-rtb-a"
+  }
+}
+
+resource "aws_route_table" "clcom-private-rtb-b" {
+  vpc_id = aws_vpc.clouda-commerce.id
+
   route{
-    cidr_block     = "10.0.16.0/20"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.clouda-commerce-nat-2.id
   }
 
   tags = {
-    Name = "clouda-commerce-private-rtb"
+    Name = "clouda-commerce-private-rtb-b"
   }
 }
 
@@ -140,12 +155,12 @@ resource "aws_route_table" "clcom-public-rtb" {
 
 resource "aws_route_table_association" "clcom-private-1" {
   subnet_id      = aws_subnet.clcom-private-1.id
-  route_table_id = aws_route_table.clcom-private-rtb.id
+  route_table_id = aws_route_table.clcom-private-rtb-a.id
 }
 
 resource "aws_route_table_association" "clcom-private-2" {
   subnet_id      = aws_subnet.clcom-private-2.id
-  route_table_id = aws_route_table.clcom-private-rtb.id
+  route_table_id = aws_route_table.clcom-private-rtb-b.id
 }
 
 resource "aws_route_table_association" "clcom-public-1" {
