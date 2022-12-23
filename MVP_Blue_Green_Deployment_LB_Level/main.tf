@@ -3,7 +3,7 @@ provider "aws" {
   region = "eu-west-2"
 }
 
-module "vpc-asia" {
+module "vpc-clouda-commerce" {
   source = "./Network_config"
   providers = {
     aws = aws.london
@@ -18,7 +18,7 @@ module "EKS-cluster-Green" {
   }
   cluster_name    = "clouda-commerce-EKS-Green"
   cluster_version = "1.22"
-  subnet_ids      = module.vpc-asia.subnet-ids
+  subnet_ids      = module.vpc-clouda-commerce.subnet-ids
 }
 
 module "EKS-cluster-Blue" {
@@ -28,7 +28,7 @@ module "EKS-cluster-Blue" {
   }
   cluster_name    = "clouda-commerce-EKS-Blue"
   cluster_version = "1.22"
-  subnet_ids      = module.vpc-asia.subnet-ids
+  subnet_ids      = module.vpc-clouda-commerce.subnet-ids
 }
 
 module "EKS-Fargate-Blue" {
@@ -37,7 +37,7 @@ module "EKS-Fargate-Blue" {
     aws = aws.london
   }
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
-  subnet_ids  = module.vpc-asia.subnet-ids
+  subnet_ids  = module.vpc-clouda-commerce.subnet-ids
 }
 
 module "EKS-Fargate-Green" {
@@ -46,7 +46,7 @@ module "EKS-Fargate-Green" {
     aws = aws.london
   }
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
-  subnet_ids  = module.vpc-asia.subnet-ids
+  subnet_ids  = module.vpc-clouda-commerce.subnet-ids
 }
 
 module "EKS-OIDC-Provider-Blue" {
@@ -99,8 +99,9 @@ module "setup-LB-Blue" {
   }
   EKS-cluster-OIDC-Provider = module.EKS-OIDC-Provider-Blue.OIDC-Provider
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
-  vpc = module.vpc-asia.vpc-resource
+  vpc = module.vpc-clouda-commerce.vpc-resource
   Fargate-profile = module.EKS-Fargate-Blue.profile
+  ingress-config = "ingress_blue.yaml"
 }
 
 module "setup-LB-Green" {
@@ -111,8 +112,9 @@ module "setup-LB-Green" {
   }
   EKS-cluster-OIDC-Provider = module.EKS-OIDC-Provider-Green.OIDC-Provider
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
-  vpc = module.vpc-asia.vpc-resource
+  vpc = module.vpc-clouda-commerce.vpc-resource
   Fargate-profile = module.EKS-Fargate-Green.profile
+  ingress-config = "ingress_green.yaml"
 }
 
 module "kubectl-update-blue" {
@@ -133,3 +135,30 @@ module "kubectl-update-green" {
     module.kubectl-update-blue
   ]
 }
+
+/* module "ingress-provision-blue"{
+  source = "./IngressProvision_config"
+  EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
+  ingress-config = "ingress_blue.yaml"
+  providers = {
+    aws = aws.london
+  }
+  depends_on = [
+    module.kubectl-update-green,
+    module.setup-LB-Blue
+  ]
+}
+
+module "ingress-provision-green"{
+  source = "./IngressProvision_config"
+  EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
+  ingress-config = "ingress_green.yaml"
+  providers = {
+    aws = aws.london
+  }
+  depends_on = [
+    module.ingress-provision-blue,
+    module.setup-LB-Green
+  ]
+}
+ */
