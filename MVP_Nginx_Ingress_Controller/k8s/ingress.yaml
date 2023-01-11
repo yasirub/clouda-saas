@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-test
+  namespace: default
+spec:
+  ingressClassName: nginx
+  rules:
+     - host:
+       http:
+         paths:
+         - path: /
+           pathType: Prefix
+           backend:
+             service:
+               name: service-clouda-commerce-api
+               port:
+                 number: 8081
