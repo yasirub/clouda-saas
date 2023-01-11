@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cognitoidentity"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -24,7 +25,7 @@ var sess *(session.Session)
 var err error
 var svc *(s3.S3)
 
-func cognito_identiy_GetId(token string) string {
+func cognito_identiy_GetId(token string) *cognitoidentity.Credentials {
 	svc := cognitoidentity.New(sess)
 	logins := make(map[string]*string)
 	logins["cognito-idp.eu-west-2.amazonaws.com/eu-west-2_ypy2SeovU"] = &token
@@ -37,21 +38,33 @@ func cognito_identiy_GetId(token string) string {
 	if err != nil {
 		log.Println(err.Error())
 	} else {
-		log.Print(*result.IdentityId)
+		//log.Println(*result.IdentityId)
 	}
-
-	getOpenIdTokenInput := &cognitoidentity.GetOpenIdTokenInput{
+	getCredentialsForIdentityInput := &cognitoidentity.GetCredentialsForIdentityInput{
 		IdentityId: result.IdentityId,
 		Logins:     logins,
 	}
+	getCredentialsForIdentityOutput, err := svc.GetCredentialsForIdentity(getCredentialsForIdentityInput)
+	if err != nil {
+		log.Println(err.Error())
+	} else {
+		log.Println(*getCredentialsForIdentityOutput)
+	}
+	return getCredentialsForIdentityOutput.Credentials
+	//this getOpenIdToken dosent work with role mapping enabled
+	/*getOpenIdTokenInput := &cognitoidentity.GetOpenIdTokenInput{
+		IdentityId: result.IdentityId,
+		Logins:     logins,
+	}
+
 	getOpenIdTokenOutput, err := svc.GetOpenIdToken(getOpenIdTokenInput)
 	if err != nil {
 		log.Println(err.Error())
 	} else {
-		log.Print(*getOpenIdTokenOutput.Token)
+		//log.Println(*getOpenIdTokenOutput.Token)
 	}
 	return *getOpenIdTokenOutput.Token
-
+	*/
 }
 
 func sts_AssumeRoleWithWebIdentity(token string) {
@@ -64,7 +77,6 @@ func sts_AssumeRoleWithWebIdentity(token string) {
 		RoleSessionName:  aws.String("s3-access"),
 		WebIdentityToken: aws.String(token),
 	}
-
 	result, err := svc.AssumeRoleWithWebIdentity(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
@@ -106,16 +118,17 @@ func main() {
 		log.Println(err.Error())
 	}
 	svc = s3.New(sess)
+
 	log.Println(svc.APIVersion)
 	lambda.Start(handler)
 }
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	token := request.Headers["authorization"]
-	log.Println(token)
-	openId_token := cognito_identiy_GetId(token)
-	sts_AssumeRoleWithWebIdentity(openId_token)
+	creds := cognito_identiy_GetId(token)
+	//sts_AssumeRoleWithWebIdentity(openId_token)
 	log.Println("Hello world")
+	svc.Config.Credentials = credentials.NewStaticCredentials(*creds.AccessKeyId, *creds.SecretKey, *creds.SessionToken)
 	result, err := svc.ListBuckets(nil)
 	if err != nil {
 		log.Printf("Unable to list buckets, %v \n", err)
