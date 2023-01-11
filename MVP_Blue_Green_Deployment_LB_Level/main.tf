@@ -101,7 +101,6 @@ module "setup-LB-Blue" {
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
   vpc = module.vpc-clouda-commerce.vpc-resource
   Fargate-profile = module.EKS-Fargate-Blue.profile
-  ingress-config = "ingress_blue.yaml"
 }
 
 module "setup-LB-Green" {
@@ -114,12 +113,12 @@ module "setup-LB-Green" {
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
   vpc = module.vpc-clouda-commerce.vpc-resource
   Fargate-profile = module.EKS-Fargate-Green.profile
-  ingress-config = "ingress_green.yaml"
 }
 
 module "kubectl-update-blue" {
   source = "./KubectlUpdate_config"
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
+  config-file = "./k8s_config/ingress_blue.yaml"
   providers = {
     aws = aws.london
   }
@@ -128,6 +127,7 @@ module "kubectl-update-blue" {
 module "kubectl-update-green" {
   source = "./KubectlUpdate_config"
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
+  config-file = "./k8s_config/ingress_green.yaml"
   providers = {
     aws = aws.london
   }
@@ -135,30 +135,3 @@ module "kubectl-update-green" {
     module.kubectl-update-blue
   ]
 }
-
-/* module "ingress-provision-blue"{
-  source = "./IngressProvision_config"
-  EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
-  ingress-config = "ingress_blue.yaml"
-  providers = {
-    aws = aws.london
-  }
-  depends_on = [
-    module.kubectl-update-green,
-    module.setup-LB-Blue
-  ]
-}
-
-module "ingress-provision-green"{
-  source = "./IngressProvision_config"
-  EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
-  ingress-config = "ingress_green.yaml"
-  providers = {
-    aws = aws.london
-  }
-  depends_on = [
-    module.ingress-provision-blue,
-    module.setup-LB-Green
-  ]
-}
- */

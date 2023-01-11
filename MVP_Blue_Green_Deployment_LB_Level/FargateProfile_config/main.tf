@@ -56,12 +56,12 @@ resource "null_resource" "k8s_patcher" {
 
   provisioner "local-exec" {
     command = <<EOH
-cat >/tmp/ca.crt <<EOF
+cat >/tmp/ca-${var.EKS-cluster.name}.crt <<EOF
 ${base64decode(var.EKS-cluster.certificate_authority[0].data)}
 EOF
 kubectl \
   --server="${var.EKS-cluster.endpoint}" \
-  --certificate_authority=/tmp/ca.crt \
+  --certificate_authority=/tmp/ca-${var.EKS-cluster.name}.crt \
   --token="${data.aws_eks_cluster_auth.eks.token}" \
   patch deployment coredns \
   -n kube-system --type json \
