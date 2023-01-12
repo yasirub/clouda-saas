@@ -41,6 +41,19 @@ resource "aws_eks_fargate_profile" "kube-system" {
   }
 }
 
+resource "aws_eks_fargate_profile" "blue-green" {
+  cluster_name           = var.EKS-cluster.name
+  fargate_profile_name   = "blue-green"
+  pod_execution_role_arn = aws_iam_role.eks-fargate-profile.arn
+
+  # These subnets must have the following resource tag: 
+  # kubernetes.io/cluster/<CLUSTER_NAME>.
+  subnet_ids = var.subnet_ids
+  selector {
+    namespace = "blue-green"
+  }
+}
+
 data "aws_eks_cluster_auth" "eks" {
   name = var.EKS-cluster.id
 }
