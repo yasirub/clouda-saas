@@ -20,9 +20,12 @@ spec:
         app.kubernetes.io/name: blue-green-app
     spec:
       containers:
-      - image: argoproj/rollouts-demo:blue
+      - image: yasirub/blue-green:latest
         imagePullPolicy: Always
         name: blue-green-app
+        env:
+        - name: cluster_color
+          value: "Blue"
         ports:
         - containerPort: 8080
 ---
