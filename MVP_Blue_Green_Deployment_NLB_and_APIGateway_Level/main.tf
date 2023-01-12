@@ -1,12 +1,12 @@
 provider "aws" {
-  alias  = "london"
-  region = "eu-west-2"
+  alias  = "frankfurt"
+  region = "eu-central-1"
 }
 
 module "vpc-clouda-commerce" {
   source = "./Network_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   cluster_name = "clouda-commerce-EKS"
 }
@@ -14,7 +14,7 @@ module "vpc-clouda-commerce" {
 module "EKS-cluster-Green" {
   source = "./EksCluster_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   cluster_name    = "clouda-commerce-EKS-Green"
   cluster_version = "1.22"
@@ -24,7 +24,7 @@ module "EKS-cluster-Green" {
 module "EKS-cluster-Blue" {
   source = "./EksCluster_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   cluster_name    = "clouda-commerce-EKS-Blue"
   cluster_version = "1.22"
@@ -34,7 +34,7 @@ module "EKS-cluster-Blue" {
 module "EKS-Fargate-Blue" {
   source = "./FargateProfile_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
   subnet_ids  = module.vpc-clouda-commerce.subnet-ids
@@ -43,7 +43,7 @@ module "EKS-Fargate-Blue" {
 module "EKS-Fargate-Green" {
   source = "./FargateProfile_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
   subnet_ids  = module.vpc-clouda-commerce.subnet-ids
@@ -52,7 +52,7 @@ module "EKS-Fargate-Green" {
 module "EKS-OIDC-Provider-Blue" {
   source = "./IamOdic_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
 }
@@ -60,7 +60,7 @@ module "EKS-OIDC-Provider-Blue" {
 module "EKS-OIDC-Provider-Green" {
   source = "./IamOdic_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
 }
@@ -94,7 +94,7 @@ provider "helm" {
 module "setup-LB-Blue" {
   source = "./ALBController_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
     helm = helm.blue
   }
   EKS-cluster-OIDC-Provider = module.EKS-OIDC-Provider-Blue.OIDC-Provider
@@ -106,7 +106,7 @@ module "setup-LB-Blue" {
 module "setup-LB-Green" {
   source = "./ALBController_config"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
     helm = helm.green
   }
   EKS-cluster-OIDC-Provider = module.EKS-OIDC-Provider-Green.OIDC-Provider
@@ -120,7 +120,7 @@ module "kubectl-update-blue" {
   EKS-cluster = module.EKS-cluster-Blue.EKS-Cluster
   config-file = "./k8s_config/ingress_blue.yaml"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
 }
 
@@ -129,7 +129,7 @@ module "kubectl-update-green" {
   EKS-cluster = module.EKS-cluster-Green.EKS-Cluster
   config-file = "./k8s_config/ingress_green.yaml"
   providers = {
-    aws = aws.london
+    aws = aws.frankfurt
   }
   depends_on = [
     module.kubectl-update-blue
