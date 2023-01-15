@@ -51,6 +51,7 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/scheme: internal
     alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: green-alb
     alb.ingress.kubernetes.io/load-balancer-name: green-alb
     #alb.ingress.kubernetes.io/subnets: subnet-011bf7846593749bf, subnet-06b3eb497e3f1a849
 
